@@ -7,13 +7,13 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
     private $canceller;
     private $result;
 
-    private $handlers = [];
-    private $progressHandlers = [];
+    private $handlers = array();
+    public $progressHandlers = array();
 
     private $requiredCancelRequests = 0;
     private $cancelRequests = 0;
 
-    public function __construct(callable $resolver, callable $canceller = null)
+    public function __construct($resolver, $canceller = null)
     {
         $this->canceller = $canceller;
 
@@ -25,7 +25,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         $this->call($cb);
     }
 
-    public function then(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
+    public function then($onFulfilled = null, $onRejected = null, $onProgress = null)
     {
         if (null !== $this->result) {
             return $this->result->then($onFulfilled, $onRejected, $onProgress);
@@ -55,7 +55,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         );
     }
 
-    public function done(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
+    public function done($onFulfilled = null, $onRejected = null, $onProgress = null)
     {
         if (null !== $this->result) {
             return $this->result->done($onFulfilled, $onRejected, $onProgress);
@@ -71,7 +71,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         }
     }
 
-    public function otherwise(callable $onRejected)
+    public function otherwise($onRejected)
     {
         return $this->then(null, static function ($reason) use ($onRejected) {
             if (!_checkTypehint($onRejected, $reason)) {
@@ -82,7 +82,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         });
     }
 
-    public function always(callable $onFulfilledOrRejected)
+    public function always($onFulfilledOrRejected)
     {
         return $this->then(static function ($value) use ($onFulfilledOrRejected) {
             return resolve($onFulfilledOrRejected())->then(function () use ($value) {
@@ -95,7 +95,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         });
     }
 
-    public function progress(callable $onProgress)
+    public function progress($onProgress)
     {
         return $this->then(null, null, $onProgress);
     }
@@ -112,9 +112,10 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         $this->call($canceller);
     }
 
-    private function resolver(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
+    private function resolver($onFulfilled = null, $onRejected = null, $onProgress = null)
     {
-        return function ($resolve, $reject, $notify) use ($onFulfilled, $onRejected, $onProgress) {
+        $that = $this;
+        return function ($resolve, $reject, $notify) use ($onFulfilled, $onRejected, $onProgress, $that) {
             if ($onProgress) {
                 $progressHandler = static function ($update) use ($notify, $onProgress) {
                     try {
@@ -129,13 +130,13 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
                 $progressHandler = $notify;
             }
 
-            $this->handlers[] = static function (ExtendedPromiseInterface $promise) use ($onFulfilled, $onRejected, $resolve, $reject, $progressHandler) {
+            $that->handlers[] = static function (ExtendedPromiseInterface $promise) use ($onFulfilled, $onRejected, $resolve, $reject, $progressHandler) {
                 $promise
                     ->then($onFulfilled, $onRejected)
                     ->done($resolve, $reject, $progressHandler);
             };
 
-            $this->progressHandlers[] = $progressHandler;
+            $that->progressHandlers[] = $progressHandler;
         };
     }
 
@@ -160,7 +161,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
 
         $handlers = $this->handlers;
 
-        $this->progressHandlers = $this->handlers = [];
+        $this->progressHandlers = $this->handlers = array();
         $this->result = $promise;
         $this->canceller = null;
 
@@ -189,7 +190,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         return $promise;
     }
 
-    private function call(callable $cb)
+    private function call($cb)
     {
         // Explicitly overwrite argument with null value. This ensure that this
         // argument does not show up in the stack trace in PHP 7+ only.

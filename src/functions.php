@@ -28,7 +28,7 @@ function resolve($promiseOrValue = null)
         $canceller = null;
 
         if (\method_exists($promiseOrValue, 'cancel')) {
-            $canceller = [$promiseOrValue, 'cancel'];
+            $canceller = array($promiseOrValue, 'cancel');
         }
 
         return new Promise(function ($resolve, $reject, $notify) use ($promiseOrValue) {
@@ -164,7 +164,7 @@ function some($promisesOrValues, $howMany)
         resolve($promisesOrValues)
             ->done(function ($array) use ($howMany, $cancellationQueue, $resolve, $reject, $notify) {
                 if (!\is_array($array) || $howMany < 1) {
-                    $resolve([]);
+                    $resolve(array());
                     return;
                 }
 
@@ -184,8 +184,8 @@ function some($promisesOrValues, $howMany)
 
                 $toResolve = $howMany;
                 $toReject  = ($len - $toResolve) + 1;
-                $values    = [];
-                $reasons   = [];
+                $values    = array();
+                $reasons   = array();
 
                 foreach ($array as $i => $promiseOrValue) {
                     $fulfiller = function ($val) use ($i, &$values, &$toResolve, $toReject, $resolve) {
@@ -232,7 +232,7 @@ function some($promisesOrValues, $howMany)
  * @param callable $mapFunc
  * @return PromiseInterface
  */
-function map($promisesOrValues, callable $mapFunc)
+function map($promisesOrValues, $mapFunc)
 {
     $cancellationQueue = new CancellationQueue();
     $cancellationQueue->enqueue($promisesOrValues);
@@ -241,12 +241,12 @@ function map($promisesOrValues, callable $mapFunc)
         resolve($promisesOrValues)
             ->done(function ($array) use ($mapFunc, $cancellationQueue, $resolve, $reject, $notify) {
                 if (!\is_array($array) || !$array) {
-                    $resolve([]);
+                    $resolve(array());
                     return;
                 }
 
                 $toResolve = \count($array);
-                $values    = [];
+                $values    = array();
 
                 foreach ($array as $i => $promiseOrValue) {
                     $cancellationQueue->enqueue($promiseOrValue);
@@ -281,7 +281,7 @@ function map($promisesOrValues, callable $mapFunc)
  * @param mixed $initialValue
  * @return PromiseInterface
  */
-function reduce($promisesOrValues, callable $reduceFunc, $initialValue = null)
+function reduce($promisesOrValues, $reduceFunc, $initialValue = null)
 {
     $cancellationQueue = new CancellationQueue();
     $cancellationQueue->enqueue($promisesOrValues);
@@ -290,7 +290,7 @@ function reduce($promisesOrValues, callable $reduceFunc, $initialValue = null)
         resolve($promisesOrValues)
             ->done(function ($array) use ($reduceFunc, $initialValue, $cancellationQueue, $resolve, $reject, $notify) {
                 if (!\is_array($array)) {
-                    $array = [];
+                    $array = array();
                 }
 
                 $total = \count($array);
@@ -321,7 +321,7 @@ function reduce($promisesOrValues, callable $reduceFunc, $initialValue = null)
 /**
  * @internal
  */
-function _checkTypehint(callable $callback, $object)
+function _checkTypehint($callback, $object)
 {
     if (!\is_object($object)) {
         return true;
